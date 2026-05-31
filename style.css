@@ -354,6 +354,36 @@ main {
 .day-tab:hover       { background: var(--bg); color: var(--text); }
 .day-tab--active     { background: var(--green-700); color: #fff; }
 
+/* ── Days selector ───────────────────────────────────────────────────────── */
+.days-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.days-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.days-btn {
+  flex: 1;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 7px 4px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  min-width: 30px;
+}
+.days-btn:hover     { border-color: var(--green-300); color: var(--text); }
+.days-btn--active   { background: var(--green-700); border-color: var(--green-700); color: #fff; }
+
 /* ── Extra pills ─────────────────────────────────────────────────────────── */
 .pill--gray   { background: #9CA3AF; color: #fff; }
 .pill--purple { background: #7C3AED; color: #fff; }

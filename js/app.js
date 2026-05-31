@@ -2,22 +2,24 @@
 
 // ── State ────────────────────────────────────────────────────────────────────
 const LS = {
-  mealLog:     'ft_mealLog',
-  purchased:   'ft_purchased',
-  purchaseWeek:'ft_purchaseWeek',
-  customItems: 'ft_customItems',
+  mealLog:      'ft_mealLog',
+  purchased:    'ft_purchased',
+  purchaseWeek: 'ft_purchaseWeek',
+  customItems:  'ft_customItems',
+  shoppingDays: 'ft_shoppingDays',
 };
 
 let currentPage       = 'home';
 let planViewWeek      = 0; // 0 or 1
 let planViewDayInWeek = 0; // 0–6 (Mon–Sun)
+let shoppingDays      = parseInt(localStorage.getItem('ft_shoppingDays') || '3');
 
 // ── Date / Cycle Helpers ─────────────────────────────────────────────────────
 function todayDayIndex() {
   // 14-day rotating cycle anchored to Mon 2026-01-05
   const anchor = new Date('2026-01-05T00:00:00');
   const today  = new Date(); today.setHours(0,0,0,0);
-  const diff   = Math.floor((today - anchor) / 86400000);
+  const diff   = Math.round((today - anchor) / 86400000); // round to handle DST ±1h
   return ((diff % 14) + 14) % 14; // 0–13
 }
 
@@ -284,7 +286,7 @@ function renderPlan() {
 
 // ── Shopping Page ─────────────────────────────────────────────────────────────
 function renderShopping() {
-  const shopList  = buildShoppingList(3);
+  const shopList  = buildShoppingList(shoppingDays);
   const purchased = getPurchased();
   const groups    = groupByCategory(shopList);
   const catOrder  = Object.keys(CATEGORIES).filter(c => groups[c]);
@@ -292,15 +294,20 @@ function renderShopping() {
   const done  = shopList.filter(i => purchased[i.key]).length;
   const pct   = total > 0 ? Math.round(done/total*100) : 0;
   const today = new Date();
-  const d2    = new Date(); d2.setDate(d2.getDate()+2);
+  const dEnd  = new Date(); dEnd.setDate(dEnd.getDate() + shoppingDays - 1);
 
   return `
 <div class="page">
   <div class="page-header">
     <div>
       <h1 class="page-title">${ui('shopping_list')}</h1>
-      <div class="date-label">${fmtShort(today)} – ${fmtShort(d2)} · ${ui('next_3_days')}</div>
+      <div class="date-label">${fmtShort(today)} – ${fmtShort(dEnd)} · ${ui('next_n_days').replace('{n}', shoppingDays)}</div>
     </div>
+  </div>
+  <div class="days-selector">
+    <span class="days-label">${ui('buy_for')}</span>
+    ${[1,2,3,4,5,6,7].map(n=>`<button class="days-btn${n===shoppingDays?' days-btn--active':''}" data-days="${n}">${n}</button>`).join('')}
+    <span class="days-label">${ui('days_lbl')}</span>
   </div>
   <div class="card">
     <div class="progress-head">
@@ -380,6 +387,9 @@ function initEvents() {
     const dayTab = e.target.closest('.day-tab');
     if (dayTab) { planViewDayInWeek=+dayTab.dataset.day; render(); return; }
 
+    const daysBtn = e.target.closest('.days-btn');
+    if (daysBtn) { shoppingDays=+daysBtn.dataset.days; localStorage.setItem(LS.shoppingDays, shoppingDays); render(); return; }
+
     if (e.target.id==='clear-purchased') { savePurchased({}); render(); return; }
 
     if (e.target.id==='add-custom') {
@@ -415,7 +425,7 @@ function initEvents() {
 }
 
 function updateProgressDisplay() {
-  const shopList=buildShoppingList(3), purchased=getPurchased();
+  const shopList=buildShoppingList(shoppingDays), purchased=getPurchased();
   const total=shopList.length, done=shopList.filter(i=>purchased[i.key]).length;
   const pct=total>0?Math.round(done/total*100):0;
   const headSpan=document.querySelector('.progress-head span:not(.pill)');
